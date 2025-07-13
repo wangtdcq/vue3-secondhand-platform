@@ -1,0 +1,46 @@
+{
+  "users": [
+    {
+      "id": 123456,
+      "name": "Trump",
+      "avatar": "",
+      "message": [
+        {
+          "messageId": "msg_001",
+          "sender": "Trump",
+          "type": "text",
+          "content": "你好",
+          "timestamp": "2023-03-12T09:57:00"
+        },
+        {
+          "messageId": "msg_002",
+          "sender": "Trump",
+          "type": "text",
+          "content": "你好2",
+          "timestamp": "2023-03-12T09:58:00"
+        }
+      ]
+    },
+    {
+      "id": 123456,
+      "name": "Doom",
+      "avatar": "",
+      "message": [
+        {
+          "messageId": "msg_001",
+          "sender": "Trump",
+          "type": "text",
+          "content": "你好",
+          "timestamp": "2023-03-12T09:57:00"
+        },
+        {
+          "messageId": "msg_002",
+          "sender": "Trump",
+          "type": "text",
+          "content": "你好2",
+          "timestamp": "2023-03-12T09:58:00"
+        }
+      ]
+    }
+  ]
+}
