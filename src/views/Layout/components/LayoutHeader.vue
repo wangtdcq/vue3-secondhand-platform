@@ -45,6 +45,17 @@ const commit = () => {
 const inform = () => {
     console.log("点击了")
 }
+//防抖
+const debounce = (func, wait) => {
+    let timer;
+    return function (...args) {
+        clearTimeout(timer);
+        timer = setInterval(() => {
+            func.apply(this, args);
+        }, wait);
+    }
+}
+const debouncedSearch = debounce(inform, 3000);
 </script>
 
 <template>
@@ -57,7 +68,7 @@ const inform = () => {
             <div class="search">
                 <input id="searchBar" type="text" class="input" :placeholder="currentPrompt" v-model="searchQuery"
                     @keyup.enter="commit">
-                <button class="button" @click="commit(); inform()">
+                <button class="button" @click="commit(); debouncedSearch()">
                     <i class=" iconfont icon-sousuo3"></i>
                     <span>搜索</span>
                 </button>
