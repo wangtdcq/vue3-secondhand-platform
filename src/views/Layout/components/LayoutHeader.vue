@@ -41,6 +41,10 @@ const commit = () => {
         query: { param: searchQuery.value }
     })
 }
+//通知是否点击
+const inform = () => {
+    console.log("点击了")
+}
 </script>
 
 <template>
@@ -53,7 +57,7 @@ const commit = () => {
             <div class="search">
                 <input id="searchBar" type="text" class="input" :placeholder="currentPrompt" v-model="searchQuery"
                     @keyup.enter="commit">
-                <button class="button" @click="commit">
+                <button class="button" @click="commit(); inform()">
                     <i class=" iconfont icon-sousuo3"></i>
                     <span>搜索</span>
                 </button>
