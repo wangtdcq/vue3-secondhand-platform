@@ -56,7 +56,22 @@ function debounce(func, wait) {
         }, wait);
     }
 }
+//防抖-立即执行
+function debounceImmediate(func, wait) {
+    let timer;
+    return function (...arg) {
+        const callNow = !timer;
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            timer = null;
+        }, wait);
+        if (callNow) {
+            func.apply(this, arg);
+        }
+    }
+}
 const debouncedSearch = debounce(commit, 1000);
+const debouncedSearchImmediate = debounceImmediate(commit, 1000);
 </script>
 
 <template>
@@ -69,7 +84,7 @@ const debouncedSearch = debounce(commit, 1000);
             <div class="search">
                 <input id="searchBar" type="text" class="input" :placeholder="currentPrompt" v-model="searchQuery"
                     @keyup.enter="commit">
-                <button class="button" @click="debouncedSearch">
+                <button class="button" @click="debouncedSearchImmediate">
                     <i class=" iconfont icon-sousuo3"></i>
                     <span>搜索</span>
                 </button>
