@@ -70,8 +70,36 @@ function debounceImmediate(func, wait) {
         }
     }
 }
+//防抖-可配置
+function debounceAdvanced(func, wait, option = { leading: true, trailing: true }) {
+    let timer;
+    let lastArgs;
+    let lastThis;
+
+    return function (...args) {
+        lastArgs = args;
+        lastThis = this;
+
+        if (timer) {
+            clearTimeout(timer);
+        }
+
+        if (option.leading && !timer) {
+            func.apply(this, args);
+        }
+        timer = setTimeout(() => {
+            timer = null;
+            if (option.trailing && lastArgs) {
+                func.apply(lastThis, lastArgs);
+                lastArgs = null;
+                lastThis = null;
+            }
+        }, wait);
+    };
+}
 const debouncedSearch = debounce(commit, 1000);
 const debouncedSearchImmediate = debounceImmediate(commit, 1000);
+const debouncedAdvanced = debounceAdvanced(commit, 1000);
 </script>
 
 <template>
@@ -84,7 +112,7 @@ const debouncedSearchImmediate = debounceImmediate(commit, 1000);
             <div class="search">
                 <input id="searchBar" type="text" class="input" :placeholder="currentPrompt" v-model="searchQuery"
                     @keyup.enter="commit">
-                <button class="button" @click="debouncedSearchImmediate">
+                <button class="button" @click="debouncedAdvanced">
                     <i class=" iconfont icon-sousuo3"></i>
                     <span>搜索</span>
                 </button>
