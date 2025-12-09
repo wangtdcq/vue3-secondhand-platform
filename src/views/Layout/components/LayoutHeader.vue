@@ -46,30 +46,7 @@ const commit = () => {
 const inform = () => {
     console.log("点击了")
 }
-//防抖
-function debounce(func, wait) {
-    let timer;
-    return function (...args) {
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-            func.apply(this, args);
-        }, wait);
-    }
-}
-//防抖-立即执行
-function debounceImmediate(func, wait) {
-    let timer;
-    return function (...arg) {
-        const callNow = !timer;
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-            timer = null;
-        }, wait);
-        if (callNow) {
-            func.apply(this, arg);
-        }
-    }
-}
+
 //防抖-可配置
 function debounceAdvanced(func, wait, option = { leading: true, trailing: true }) {
     let timer;
@@ -97,9 +74,10 @@ function debounceAdvanced(func, wait, option = { leading: true, trailing: true }
         }, wait);
     };
 }
-const debouncedSearch = debounce(commit, 1000);
-const debouncedSearchImmediate = debounceImmediate(commit, 1000);
+//防抖应用
 const debouncedAdvanced = debounceAdvanced(commit, 1000);
+import debounce2 from '@/utils/debounce';
+const debouncedSearch2 = debounce2(commit, 1000, true);
 </script>
 
 <template>
@@ -112,7 +90,7 @@ const debouncedAdvanced = debounceAdvanced(commit, 1000);
             <div class="search">
                 <input id="searchBar" type="text" class="input" :placeholder="currentPrompt" v-model="searchQuery"
                     @keyup.enter="commit">
-                <button class="button" @click="debouncedAdvanced">
+                <button class="button" @click="debouncedSearch2">
                     <i class=" iconfont icon-sousuo3"></i>
                     <span>搜索</span>
                 </button>
