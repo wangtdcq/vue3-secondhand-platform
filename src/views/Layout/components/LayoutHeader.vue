@@ -46,6 +46,84 @@ const commit = () => {
 //防抖应用
 import debounce from '@/utils/debounce';
 const debouncedSearch = debounce(commit, 1000, true);
+
+//节流-时间戳
+function trottle1(func, delay) {
+    let callNow = 0;
+    return function (...args) {
+        const now = Date.now();
+        if (now - callNow >= delay) {
+            callNow = now;
+            func.apply(this, args);
+        }
+    }
+}
+//节流-定时器
+function trottle2(func, delay) {
+    let timer;
+    return function (...args) {
+        if (!timer) {
+            timer = setTimeout(() => {
+                timer = null;
+                func.apply(this, args);
+            }, delay)
+        }
+    }
+}
+//节流-综合
+function trottle3(func, delay) {
+    let callNow = 0;
+    let timer = null;
+    return function (...args) {
+        let now = Date.now();
+        let remain = delay - (now - callNow);
+        if (remain <= 0) {
+            if (timer) {
+                clearTimeout(timer);
+                timer = null;
+            }
+            callNow = now;
+            func.apply(this, args);
+        } else if (!timer) {
+            timer = setTimeout(() => {
+                callNow = Date.now();
+                timer = null;
+                func.apply(this, args);
+            }, remain);
+        }
+    }
+}
+//节流-可配置
+// function trottle4(func, delay, { leading = true, trailing = true } = {}) {
+//     let timer = null;
+//     let nowCall = 0;
+//     return function (...args) {
+//         let now = Date.now();
+//         let remaining = delay - (now - nowCall);
+//         if (remaining <= 0) {
+//             if (timer) {
+//                 clearTimeout(timer);
+//                 timer = null
+//             }
+//             nowCall = now;
+//             if (leading) {
+//                 func.apply(this, args);
+//             }
+//         } else if (!timer && trailing) {
+//             timer = setTimeout(() => {
+//                 timer = null;
+//                 if (trailing) {
+//                     func.apply(this, args)
+//                 }
+//             })
+//         }
+//     }
+// }
+
+//节流应用
+
+import trottle from '@/utils/trottle';
+const trottleSearch = trottle(commit, 1000);
 </script>
 
 <template>
@@ -58,7 +136,7 @@ const debouncedSearch = debounce(commit, 1000, true);
             <div class="search">
                 <input id="searchBar" type="text" class="input" :placeholder="currentPrompt" v-model="searchQuery"
                     @keyup.enter="commit">
-                <button class="button" @click="debouncedSearch2">
+                <button class="button" @click="trottleSearch">
                     <i class=" iconfont icon-sousuo3"></i>
                     <span>搜索</span>
                 </button>
