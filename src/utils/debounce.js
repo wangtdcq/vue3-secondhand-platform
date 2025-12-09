@@ -1,4 +1,4 @@
-export default function debounce2(func, wait, { leading = true, trailing = true } = {}) {
+export default function debounce(func, wait, { leading = true, trailing = true } = {}) {
   //防御性编程：检查传入的是否是函数
   if (typeof func !== 'function') {
     throw new TypeError('debounce expected a function')

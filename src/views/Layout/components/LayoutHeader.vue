@@ -42,42 +42,10 @@ const commit = () => {
     })
     console.log("转移成功");
 }
-//通知是否点击
-const inform = () => {
-    console.log("点击了")
-}
 
-//防抖-可配置
-function debounceAdvanced(func, wait, option = { leading: true, trailing: true }) {
-    let timer;
-    let lastArgs;
-    let lastThis;
-
-    return function (...args) {
-        lastArgs = args;
-        lastThis = this;
-
-        if (timer) {
-            clearTimeout(timer);
-        }
-
-        if (option.leading && !timer) {
-            func.apply(this, args);
-        }
-        timer = setTimeout(() => {
-            timer = null;
-            if (option.trailing && lastArgs) {
-                func.apply(lastThis, lastArgs);
-                lastArgs = null;
-                lastThis = null;
-            }
-        }, wait);
-    };
-}
 //防抖应用
-const debouncedAdvanced = debounceAdvanced(commit, 1000);
-import debounce2 from '@/utils/debounce';
-const debouncedSearch2 = debounce2(commit, 1000, true);
+import debounce from '@/utils/debounce';
+const debouncedSearch = debounce(commit, 1000, true);
 </script>
 
 <template>
