@@ -43,22 +43,27 @@ const router = createRouter({
         {
           path: 'Category/:id',
           component: Category,
+          meta: { requiresAuth: true }, //设定访问权限（只有先登录才能访问）
         },
         {
           path: 'detail/:id',
           component: Details,
+          meta: { requiresAuth: true },
         },
         {
           path: 'talk',
           component: Talk,
+          meta: { requiresAuth: true },
         },
         {
           path: 'cartlist',
           component: CartList,
+          meta: { requiresAuth: true },
         },
         {
           path: 'checkout',
           component: Checkout,
+          meta: { requiresAuth: true },
         },
         {
           path: 'search',
@@ -66,6 +71,7 @@ const router = createRouter({
           props: (route) => ({
             searchParam: route.query.param || '',
           }),
+          meta: { requiresAuth: true },
         },
       ],
     },
@@ -86,6 +92,7 @@ const router = createRouter({
     {
       path: '/member',
       component: Member,
+      meta: { requiresAuth: true },
       children: [
         {
           path: '',
@@ -106,6 +113,23 @@ const router = createRouter({
       ],
     },
   ],
+})
+
+router.beforeEach((to, from, next) => {
+  if (to.meta.requiresAuth) {
+    const token = localStorage.getItem('token')
+    console.log('Token', token)
+    if (token) {
+      next()
+    } else {
+      next({
+        path: '/login',
+        query: { redirect: to.fullPath },
+      })
+    }
+  } else {
+    next()
+  }
 })
 
 export default router

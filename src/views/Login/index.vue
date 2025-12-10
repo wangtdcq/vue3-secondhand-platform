@@ -2,7 +2,7 @@
 import { ref, provide } from 'vue'
 import 'element-plus/theme-chalk/el-message.css'
 import { ElMessage } from 'element-plus';
-import { useRouter } from 'vue-router';
+import { useRouter, useRoute } from 'vue-router';
 import { useUserStore } from '@/stores/user';
 
 const userStore = useUserStore()
@@ -16,15 +16,20 @@ provide('globalForm', form);
 const formRef = ref(null)
 provide('globalRef', formRef)
 const router = useRouter()
+const route = useRoute()
 const doLogin = () => {
     const { account, password } = form.value
     formRef.value.validate(async (valid) => {
         if (valid) {
             await userStore.getUserInfo({ account, password })
+            localStorage.setItem('token', '123456')
             //提示用户
             ElMessage({ type: 'success', message: '登录成功' })
+            const targetPath = route.query.redirect || '/'
             //跳转首页
-            router.replace({ path: '/' })
+            // router.replace({ path: '/' })
+            console.log('正在跳转到:', targetPath)
+            router.replace(targetPath)
         }
     })
 }
