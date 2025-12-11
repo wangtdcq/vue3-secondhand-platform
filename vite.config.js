@@ -9,6 +9,8 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
+import { visualizer } from 'rollup-plugin-visualizer'
+
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
@@ -21,6 +23,12 @@ export default defineConfig({
     Components({
       //配置elementPlus采用Sass样式配色系统
       resolvers: [ElementPlusResolver({ importStyle: 'sass' })],
+    }),
+    visualizer({
+      open: true, // 打包完成后自动打开浏览器显示报告
+      gzipSize: true, // 显示 gzip 压缩后的大小
+      brotliSize: true, // 显示 brotli 压缩后的大小
+      filename: 'stats.html', // 输出文件的名字，默认也是 stats.html
     }),
   ],
   resolve: {
@@ -38,5 +46,8 @@ export default defineConfig({
           `,
       },
     },
+  },
+  build: {
+    sourcemap: true,
   },
 })
