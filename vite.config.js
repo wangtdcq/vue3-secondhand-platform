@@ -56,5 +56,31 @@ export default defineConfig({
   },
   build: {
     sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          // id 是文件的绝对路径
+          if (id.includes('node_modules')) {
+            // 1. 把 Element Plus 单独拆成一个包
+            if (id.includes('element-plus')) {
+              return
+            }
+
+            // 2. 把 Lodash 单独拆成一个包
+            if (id.includes('lodash')) {
+              return 'lodash'
+            }
+
+            // 3. 把 Vue 相关的库 (vue, vue-router, pinia) 拆成一个 common 包
+            if (id.includes('@vue') || id.includes('vue-router') || id.includes('pinia')) {
+              return 'vendor-core'
+            }
+
+            // 4. 其他所有 node_modules 里的东西打包成 vendor
+            return 'vendor'
+          }
+        },
+      },
+    },
   },
 })

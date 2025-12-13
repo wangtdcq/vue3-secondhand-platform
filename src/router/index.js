@@ -32,23 +32,17 @@ const router = createRouter({
           children: [
             {
               path: '',
-              component: () =>
-                import(
-                  /*webpackChunkName:"filter-group"*/ '@/views/Home/components/FilterPrice.vue'
-                ),
+              component: () => import('@/views/Home/components/FilterPrice.vue'),
             },
             {
               path: 'filtertime',
-              component: () =>
-                import(
-                  /*webpackChunkName:"filter-group"*/ '@/views/Home/components/FilterTime.vue'
-                ),
+              component: () => import('@/views/Home/components/FilterTime.vue'),
             },
           ],
         },
         {
           path: 'Category/:id',
-          component: () => import(/*webpackChunkName:"category"*/ '@/views/Category/index.vue'),
+          component: () => import('@/views/Category/index.vue'),
           meta: { requiresAuth: true }, //设定访问权限（只有先登录才能访问）
         },
         {
