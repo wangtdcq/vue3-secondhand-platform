@@ -57,7 +57,7 @@ const FilteredList = computed(() => {
         <ul class="goods-list">
             <li v-for="item in FilteredList" :key="item.id">
                 <RouterLink :to="`/detail/${item.id}`" :commit="FilteredList">
-                    <img v-img-lazy="item.picture" alt="" />
+                    <img :src="item.picture" alt="" loading="lazy" />
                     <p class="name">{{ item.name }}</p>
                     <p class="price">&yen;{{ item.price }}</p>
                 </RouterLink>

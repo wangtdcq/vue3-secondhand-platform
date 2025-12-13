@@ -14,7 +14,6 @@ onMounted(() => getBanner())
 
 
 <template>
-
     <div class="home-banner">
         <el-carousel height="500px">
             <el-carousel-item v-for="item in bannerList" :key="item.id">

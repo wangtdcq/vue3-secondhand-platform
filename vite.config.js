@@ -39,6 +39,13 @@ export default defineConfig({
   css: {
     preprocessorOptions: {
       scss: {
+        api: 'modern-compiler',
+        silenceDeprecations: [
+          'legacy-js-api',
+          'color-functions',
+          'global-builtin', // <--- 必须加这个！对应你截图里的警告
+          'import', // <--- 强烈建议加这个，对应截图里提到的 "/d/import"
+        ],
         //自动导入定制化样式文件进行样式覆盖
         additionalData: `
           @use "@/styles/element/index.scss" as *;

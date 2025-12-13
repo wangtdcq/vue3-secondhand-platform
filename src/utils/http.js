@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
+// import { ElMessage } from 'element-plus'
 
 const httpInstance = axios.create({
   baseURL: 'http://pcapi-xiaotuxian-front-devtest.itheima.net',
@@ -12,8 +12,8 @@ httpInstance.interceptors.request.use(
     const token = localStorage.getItem('token')
     if (token) {
       config.headers['Authorization'] = `Bearer ${token}`
-      return config
     }
+    return config
   },
   (error) => Promise.reject(error),
 )
@@ -37,12 +37,12 @@ httpInstance.interceptors.response.use(
     return Promise.reject(e)
   },
 )
-function handleLoginExpire() {
-  localStorage.removeItem('token')
-  router.push({
-    path: '/login',
-    query: { redirect: router.currentRoute.value.fullPath },
-  })
-}
+// function handleLoginExpire() {
+//   localStorage.removeItem('token')
+//   router.push({
+//     path: '/login',
+//     query: { redirect: router.currentRoute.value.fullPath },
+//   })
+// }
 
 export default httpInstance
