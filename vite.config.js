@@ -1,34 +1,18 @@
-import { fileURLToPath, URL } from 'node:url'
-
-import { defineConfig } from 'vite'
-import vue from '@vitejs/plugin-vue'
-import vueDevTools from 'vite-plugin-vue-devtools'
-
-//elementplus按需导入
-import AutoImport from 'unplugin-auto-import/vite'
-import Components from 'unplugin-vue-components/vite'
-import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
-
 import { visualizer } from 'rollup-plugin-visualizer'
+// ... 其他 import 保持不变
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [
     vue(),
     vueDevTools(),
-
-    AutoImport({
-      resolvers: [ElementPlusResolver()],
-    }),
-    Components({
-      //配置elementPlus采用Sass样式配色系统
-      resolvers: [ElementPlusResolver({ importStyle: 'sass' })],
-    }),
+    AutoImport({ resolvers: [ElementPlusResolver()] }),
+    Components({ resolvers: [ElementPlusResolver({ importStyle: 'sass' })] }),
+    // 建议：在 Netlify 构建时可以先注释掉 visualizer，排查完问题再加回来
     visualizer({
-      open: false, // 打包完成后自动打开浏览器显示报告
-      gzipSize: true, // 显示 gzip 压缩后的大小
-      brotliSize: true, // 显示 brotli 压缩后的大小
-      filename: 'stats.html', // 输出文件的名字，默认也是 stats.html
+      open: false,
+      gzipSize: true,
+      brotliSize: false, // <--- 关掉这个提升速度
+      filename: 'stats.html',
     }),
   ],
   resolve: {
@@ -40,46 +24,24 @@ export default defineConfig({
     preprocessorOptions: {
       scss: {
         api: 'modern-compiler',
-        silenceDeprecations: [
-          'legacy-js-api',
-          'color-functions',
-          'global-builtin', // <--- 必须加这个！对应你截图里的警告
-          'import', // <--- 强烈建议加这个，对应截图里提到的 "/d/import"
-        ],
-        //自动导入定制化样式文件进行样式覆盖
+        silenceDeprecations: ['legacy-js-api', 'color-functions', 'global-builtin', 'import'],
+        // ⚠️ 重要修改：
+        // 确保 var.scss 里只有变量($color: red) 和 mixin。
+        // 绝不要在这里引入包含实际 CSS 样式的 index.scss！
+        // 如果 index.scss 里有样式，请移到 main.ts 中 import。
         additionalData: `
-          @use "@/styles/element/index.scss" as *;
           @use "@/styles/var.scss" as *;
-          `,
+        `,
       },
     },
   },
   build: {
     sourcemap: false,
+    // ⚠️ 删除了 manualChunks，使用 Vite 默认策略
+    // 默认策略现在已经非常好了，不需要手动分包
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          // id 是文件的绝对路径
-          if (id.includes('node_modules')) {
-            // 1. 把 Element Plus 单独拆成一个包
-            if (id.includes('element-plus')) {
-              return
-            }
-
-            // 2. 把 Lodash 单独拆成一个包
-            if (id.includes('lodash')) {
-              return 'lodash'
-            }
-
-            // 3. 把 Vue 相关的库 (vue, vue-router, pinia) 拆成一个 common 包
-            if (id.includes('@vue') || id.includes('vue-router') || id.includes('pinia')) {
-              return 'vendor-core'
-            }
-
-            // 4. 其他所有 node_modules 里的东西打包成 vendor
-            return 'vendor'
-          }
-        },
+        // 保持默认即可，不要手动配置 manualChunks
       },
     },
   },
