@@ -25,7 +25,7 @@ export default defineConfig({
       resolvers: [ElementPlusResolver({ importStyle: 'sass' })],
     }),
     visualizer({
-      open: true, // 打包完成后自动打开浏览器显示报告
+      open: false, // 打包完成后自动打开浏览器显示报告
       gzipSize: true, // 显示 gzip 压缩后的大小
       brotliSize: true, // 显示 brotli 压缩后的大小
       filename: 'stats.html', // 输出文件的名字，默认也是 stats.html
