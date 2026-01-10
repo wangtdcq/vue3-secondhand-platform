@@ -18,12 +18,12 @@ export default defineConfig({
     AutoImport({ resolvers: [ElementPlusResolver()] }),
     Components({ resolvers: [ElementPlusResolver({ importStyle: 'sass' })] }),
     // 建议：在 Netlify 构建时可以先注释掉 visualizer，排查完问题再加回来
-    visualizer({
-      open: false,
-      gzipSize: true,
-      brotliSize: false, // <--- 关掉这个提升速度
-      filename: 'stats.html',
-    }),
+    // visualizer({
+    //   open: false,
+    //   gzipSize: true,
+    //   brotliSize: false, // <--- 关掉这个提升速度
+    //   filename: 'stats.html',
+    // }),
   ],
   resolve: {
     alias: {
