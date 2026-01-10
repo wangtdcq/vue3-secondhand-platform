@@ -1,10 +1,21 @@
+import { fileURLToPath, URL } from 'node:url'
+
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+import vueDevTools from 'vite-plugin-vue-devtools'
+
+//elementplus按需导入
+import AutoImport from 'unplugin-auto-import/vite'
+import Components from 'unplugin-vue-components/vite'
+import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
+
 import { visualizer } from 'rollup-plugin-visualizer'
-// ... 其他 import 保持不变
+import { defineConfig } from 'vite'
 
 export default defineConfig({
   plugins: [
     vue(),
-    vueDevTools(),
+    //vueDevTools(),
     AutoImport({ resolvers: [ElementPlusResolver()] }),
     Components({ resolvers: [ElementPlusResolver({ importStyle: 'sass' })] }),
     // 建议：在 Netlify 构建时可以先注释掉 visualizer，排查完问题再加回来
