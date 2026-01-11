@@ -20,8 +20,14 @@ export default defineConfig({
     {
       name: 'force-exit-after-build',
       closeBundle() {
-        console.log('📦 Build finished, forcing process exit...')
-        process.exit(0) // 强行退出 Node 进程，不给卡顿的机会
+        if (process.env.NODE_ENV === 'production') {
+          console.log('📦 Build finished. Waiting for I/O flush...')
+          // ⏳ 延迟 1000 毫秒（1秒）再退出，给文件写入留出时间
+          setTimeout(() => {
+            console.log('👋 Forcing process exit now.')
+            process.exit(0)
+          }, 1000)
+        }
       },
     },
     // 建议：在 Netlify 构建时可以先注释掉 visualizer，排查完问题再加回来
