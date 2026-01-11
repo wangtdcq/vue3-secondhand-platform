@@ -17,6 +17,13 @@ export default defineConfig({
     //vueDevTools(),
     AutoImport({ resolvers: [ElementPlusResolver()] }),
     Components({ resolvers: [ElementPlusResolver({ importStyle: 'sass' })] }),
+    {
+      name: 'force-exit-after-build',
+      closeBundle() {
+        console.log('📦 Build finished, forcing process exit...')
+        process.exit(0) // 强行退出 Node 进程，不给卡顿的机会
+      },
+    },
     // 建议：在 Netlify 构建时可以先注释掉 visualizer，排查完问题再加回来
     // visualizer({
     //   open: false,
