@@ -17,7 +17,7 @@ function handleEvent(data) {
     //接收参数包含的数据
     Maxprice.value = data.maxPrice
     Minprice.value = data.minPrice
-    console.log('this', Maxprice.value, Minprice.value)
+    //console.log('this', Maxprice.value, Minprice.value)
 }
 
 const FilteredList = computed(() => {
