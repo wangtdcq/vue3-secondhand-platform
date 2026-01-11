@@ -104,7 +104,7 @@ provide('DoLogin', doLogin)
             height: 132px;
             width: 100%;
             text-indent: -9999px;
-            background: url("@/assets/images/πlogo.png") no-repeat center 18px / contain;
+            background: url("@/assets/images/pi-logo.png") no-repeat center 18px / contain;
             position: relative;
             top: 0px;
             left: 20px;

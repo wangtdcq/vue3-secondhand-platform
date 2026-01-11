@@ -56,7 +56,7 @@ import HeaderCart from '../Layout/components/HeaderCart.vue';
             height: 90px;
             width: 100%;
             text-indent: -9999px;
-            background: url('@/assets/images/πlogo.png') no-repeat center 2px / contain;
+            background: url('@/assets/images/pi-logo.png') no-repeat center 2px / contain;
             position: absolute;
             left: 80px;
         }
