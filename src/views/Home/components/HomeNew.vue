@@ -9,7 +9,7 @@ const store = useDataStore()
 
 import total from '@/assets/new.json'
 const NewList = ref(total.result)
-console.log(NewList.value)
+//console.log(NewList.value)
 
 const Maxprice = ref(0)
 const Minprice = ref(0)
