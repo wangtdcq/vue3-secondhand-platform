@@ -2,7 +2,7 @@
 
 import { useDataStore } from '@/stores/json';
 const store = useDataStore()
-console.log(store.jsonData)
+//console.log(store.jsonData)
 
 
 </script>
