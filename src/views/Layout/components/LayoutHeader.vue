@@ -193,7 +193,7 @@ const trottleSearch = trottle(commit, 1000);
             height: 90px;
             width: 100%;
             text-indent: -9999px;
-            background: url('@/assets/images/πlogo.webp') no-repeat center 2px / contain;
+            background: url('@/assets/images/pi-logo.webp') no-repeat center 2px / contain;
         }
     }
 
