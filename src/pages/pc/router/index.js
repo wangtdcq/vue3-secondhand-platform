@@ -20,7 +20,7 @@ import Home from '@/views/Home/index.vue'
 // import userPublic from '@/views/Member/components/userPublic.vue'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  history: createWebHistory('/'),
   routes: [
     {
       path: '/',
