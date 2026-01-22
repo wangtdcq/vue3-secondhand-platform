@@ -9,7 +9,7 @@ import AutoImport from 'unplugin-auto-import/vite'
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
-import { visualizer } from 'rollup-plugin-visualizer'
+// import { visualizer } from 'rollup-plugin-visualizer'
 
 export default defineConfig({
   plugins: [
@@ -59,12 +59,50 @@ export default defineConfig({
     },
   },
   build: {
+    outDir: 'dist',
+
     sourcemap: false,
     // ⚠️ 删除了 manualChunks，使用 Vite 默认策略
     // 默认策略现在已经非常好了，不需要手动分包
+
     rollupOptions: {
+      // 【关键配置】多入口设置
+      input: {
+        // PC 端入口 (对应根目录 index.html)
+        main: path.resolve(__dirname, 'index.html'),
+        // 移动端入口 (对应根目录 mobile.html)
+        mobile: path.resolve(__dirname, 'mobile.html'),
+      },
       output: {
-        // 保持默认即可，不要手动配置 manualChunks
+        // (可选) 让打包后的资源文件分类存放，看起来更整洁
+        // 1. 入口文件（index.html 和 mobile.html 引用的那个 main.ts 编译后的结果）
+        entryFileNames: 'static/js/[name]-[hash].js',
+
+        // 2. 代码分块（你用 import() 动态引入的组件，或者 node_modules 里拆出来的包）
+        chunkFileNames: 'static/js/[name]-[hash].js',
+
+        // 3. 静态资源（CSS、图片、字体等）
+        // 这里的逻辑是：如果是 css 就放 css 目录，其他的（图片字体）都放 assets 目录
+        assetFileNames: (assetInfo) => {
+          // 结尾是 .css 的文件
+          if (assetInfo.name.endsWith('.css')) {
+            return 'static/css/[name]-[hash][extname]'
+          }
+          // 其他图片、字体等文件
+          return 'static/assets/[name]-[hash][extname]'
+        },
+      },
+    },
+    server: {
+      host: '0.0.0.0',
+      port: 5173,
+      open: true,
+      proxy: {
+        '/api': {
+          target: 'https://pcapi-xiaotuxian-front-devtest.itheima.net',
+          changeOrigin: true,
+          rewite: (path) => path.replace(/^\/api/, ''),
+        },
       },
     },
   },
