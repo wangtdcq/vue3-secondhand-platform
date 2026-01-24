@@ -21,7 +21,7 @@ export default defineConfig({
     vue(),
     // Vant配置自动按需引入
     Components({
-      resolvers: [VantResolver()],
+      resolvers: [VantResolver(), ElementPlusResolver()],
       // 建议：指定生成的类型声明文件位置，避免污染根目录
       dts: 'src/components.d.ts',
     }),
