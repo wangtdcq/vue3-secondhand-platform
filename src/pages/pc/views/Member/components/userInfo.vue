@@ -5,7 +5,7 @@ const userStore = useUserStore()
 import { getLikeListAPI } from '@/api/user';
 import { onMounted, ref } from 'vue'
 
-import GoodsItem from '@/views/Home/components/GoodsItem.vue'
+import GoodsItem from '@/pages/pc/views/Home/components/GoodsItem.vue'
 const likeList = ref([])
 const getLikeList = async () => {
     const res = await getLikeListAPI({ limit: 4 })
