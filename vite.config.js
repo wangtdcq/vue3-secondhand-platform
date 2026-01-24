@@ -11,9 +11,19 @@ import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 
 // import { visualizer } from 'rollup-plugin-visualizer'
 
+// 引入Vant插件
+import Components from 'unplugin-vue-components/vite'
+import { VantResolver } from 'unplugin-vue-components/resolvers'
+
 export default defineConfig({
   plugins: [
     vue(),
+    // Vant配置自动按需引入
+    Components({
+      resolvers: [VantResolver()],
+      // 建议：指定生成的类型声明文件位置，避免污染根目录
+      dts: 'src/components.d.ts',
+    }),
     //vueDevTools(),
     AutoImport({ resolvers: [ElementPlusResolver()] }),
     Components({ resolvers: [ElementPlusResolver({ importStyle: 'sass' })] }),
