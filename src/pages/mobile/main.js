@@ -6,6 +6,8 @@ import router from './router'
 // import 'vant/lib/index.css'
 // import 'amfe-flexible' // 如果你使用 rem 适配方案，需要引入这个
 
+import './styles/main.css'
+
 const app = createApp(App)
 
 app.use(router)
