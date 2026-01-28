@@ -38,7 +38,7 @@ const innerValue = computed({
     }
 })
 const handleSearch = () => {
-    emits = ('search', innerValue.value)
+    emits('search', innerValue.value)
 }
 const debounceEmit = debounce(() => {
     handleSearch()
