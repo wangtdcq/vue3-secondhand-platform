@@ -1,0 +1,31 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "useDefineForClassFields": true,
+    "module": "ESNext",
+    "moduleResolution": "Node",
+    "strict": true,
+    "jsx": "preserve",
+    "sourceMap": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "esModuleInterop": true,
+    "lib": ["ESNext", "DOM"],
+    "skipLibCheck": true,
+    "noEmit": true,
+
+    // === 1. 允许 JS/TS 混用 ===
+    "allowJs": true,
+
+    // === 2. 配置路径别名 (重要) ===
+    // 必须和你 vite.config.js 中的 alias 对应，否则 TS 识别不了 @
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["src/*"]
+    }
+  },
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
+
+  // === 3. 引用刚才创建的 node 配置文件 ===
+  "references": [{ "path": "./tsconfig.node.json" }]
+}
