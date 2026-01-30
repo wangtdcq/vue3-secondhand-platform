@@ -105,7 +105,13 @@ onMounted(() => {
                     <p class="price">&yen;{{ item.price }}</p>
                 </RouterLink>
             </li>
-            <div ref="loadTrigger">{{ loading ? `加载中...` : `下滑加载更多` }}</div>
+            <div ref="loadTrigger" class="loading-state">
+                <div v-if="loading" class="loading-content">
+                    <div class="spinner"></div>
+                    <span class="text">正在努力加载中...</span>
+                </div>
+                <div v-else class="text-hint">上拉加载更多</div>
+            </div>
         </ul>
     </HomePanel>
 
@@ -155,6 +161,61 @@ onMounted(() => {
         .price {
             color: $priceColor;
         }
+    }
+}
+
+.loading-state {
+    /* 关键：让内容水平和垂直居中 */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    /* 给足够的高度，避免闪烁 */
+    height: 60px;
+    width: 100%;
+    padding: 10px 0;
+
+    /* 可选：加个浅背景区分 */
+    // background-color: #f8f9fa;
+}
+
+.loading-content {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    /* 图标和字的间距 */
+}
+
+/* 旋转的圆环 */
+.spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #e1e1e1;
+    /* 浅灰色底环 */
+    border-top: 2px solid #1890ff;
+    /* 蓝色旋转头 */
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    /* 旋转动画 */
+}
+
+.text {
+    font-size: 13px;
+    color: #666;
+}
+
+.text-hint {
+    font-size: 12px;
+    color: #999;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
     }
 }
 </style>
