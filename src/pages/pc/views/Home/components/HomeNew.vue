@@ -1,13 +1,14 @@
 <script setup>
 
 import HomePanel from './HomePanel.vue';
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 
 import { useDataStore } from '@/stores/json';
 const store = useDataStore()
 
 
 import total from '@/assets/new.json'
+
 const NewList = ref(total.result)
 //console.log(NewList.value)
 // console.log(NewList.value.length)
@@ -79,6 +80,15 @@ const loadMore = () => {
         loading.value = false;
     }, 500);
 };
+// 暴力增加2000条
+const addMassiveData = () => {
+    const massiveitems = generateFromJSON(20000);
+    displayList.value.push(...massiveitems);
+    console.log('已手动增加20000条数据');
+};
+onMounted(() => {
+    window.addDate = addMassiveData;
+})
 // 触底监听
 onMounted(() => {
     if (!NewList.value.length) {
