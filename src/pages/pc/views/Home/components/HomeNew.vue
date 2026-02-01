@@ -115,11 +115,17 @@ const itemHeight = 300;          // 固定每行高度
 const viewHeight = ref(800);     // 可视区域高度
 const scrollTop = ref(0);        // 当前滚动距离
 const bufferCount = 5;           // 缓冲数量（防止滑动过快白屏）
-// 计算总高度（占位高度）
-const totalHeight = computed(() => displayList.value.length * itemHeight);
+// 控制参数
+const COLUMN_COUNT = 4;
+
+// 计算总高度（占位高度）= 所有数据加起来的总行数 * 行高
+const totalHeight = computed(() => {
+    const rows = Math.ceil(displayList.value.length / COLUMN_COUNT);
+    return rows * itemHeight;
+});
 
 // 计算当前可视范围的起始索引
-const startIdedx = computed(() => {
+const startIndex = computed(() => {
     return Math.max(0, Math.floor(scrollTop.value / itemHeight) - bufferCount)
 })
 
@@ -133,18 +139,24 @@ const endIndex = computed(() => {
 
 // 最终渲染的数据切片
 const visibleList = computed(() => {
-    return displayList.value.slice(startIdedx.value, endIndex.value).map((item, index) => ({
-        ...item,
-        top: (startIdedx.value + index) * itemHeight
-    }))
+    // return displayList.value.slice(startIdedx.value, endIndex.value).map((item, index) => ({
+    //     ...item,
+    //     top: (startIdedx.value + index) * itemHeight
+    // }))
+    const start = startIndex.value * COLUMN_COUNT;
+    const end = start + (Math.ceil(viewHeight.value / itemHeight) + 4) * COLUMN_COUNT;
+    return displayList.value.slice(start, end);
 })
+// 计算列表相对于顶部的偏移量（核心：防止列表随滚动滑出视野）
+const offset = computed(() => startIndex.value * itemHeight);
 
 // 滚动处理  
 const onScroll = computed((e) => {
     const target = e.target;
     scrollTop.value = target.scrollTop;
+
     // 触底判断：滚动到底部剩余 200px 时加载更多
-    if (target.scrollTop + target.clientHeight >= target.scrollTop - 200) {
+    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 200) {
         loadMore();
     }
 })
@@ -157,8 +169,8 @@ const onScroll = computed((e) => {
             <div class="phantom" :style="{ height: totalHeight + 'px' }"></div>
 
             <!-- 实际渲染的内容区域 -->
-            <ul class="goods-list">
-                <li v-for="item in displayList" :key="item.uniqueId"
+            <ul class="goods-list" :style="{ transform: `translateY(${offset}px)` }">
+                <li v-for="item in visibleList" :key="item.uniqueId"
                     :style="{ height: itemHeight + 'px', transform: `translateY(${item.top}px)` }">
                     <RouterLink :to="`/detail/${item.id}`" :commit="FilteredList">
                         <img :src="item.picture" alt="" loading="lazy" />
