@@ -111,7 +111,7 @@ onMounted(() => {
 
 // --- 虚拟列表配置 --- 
 const containerRef = ref(null);  // 滚动容器引用
-const itemHeight = 300;          // 固定每行高度
+const itemHeight = 400;          // 固定每行高度
 const viewHeight = ref(800);     // 可视区域高度
 const scrollTop = ref(0);        // 当前滚动距离
 const bufferCount = 5;           // 缓冲数量（防止滑动过快白屏）
@@ -197,6 +197,7 @@ const onScroll = computed((e) => {
 
 
 <style scoped lang='scss'>
+// 视口容器必须固定高度，且 overflow 为 auto
 .virtual-container {
     height: 800px;
     overflow-y: auto;
@@ -204,6 +205,7 @@ const onScroll = computed((e) => {
     width: 100%;
 }
 
+// 占位元素：负责撑开滚动条
 .phantom {
     position: absolute;
     left: 0;
@@ -212,21 +214,23 @@ const onScroll = computed((e) => {
     z-index: -1;
 }
 
+// 列表样式
 .goods-list {
     display: flex;
     // justify-content: space-between;
     // height: 406px;
-    position: relative;
+    position: relative; // 配合 transform 使用
     left: 20px;
     top: -10px;
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: wrap; // 允许换行
     // gap: 20px;
-    row-gap: 10px;
+    // row-gap: 10px;
+    width: 100%;
 
     li {
-        width: 293px;
-        height: 406px;
+        width: 25%; // 一行4个商品，对应 COLUMN_COUNT = 4
+        height: 400px; // 必须和 itemHeight 一致
 
         background: #f0f9f4;
         transition: all .5s;
@@ -237,7 +241,7 @@ const onScroll = computed((e) => {
         }
 
         img {
-            width: 290px;
+            width: 100%;
             height: 306px;
         }
 
