@@ -183,6 +183,7 @@ onUnmounted(() => {
     position: relative;
     width: 100%;
     overflow: visible;
+
 }
 
 // 占位元素：负责撑开滚动条
@@ -200,13 +201,13 @@ onUnmounted(() => {
     // justify-content: space-between;
     // height: 406px;
     position: absolute; // 配合 transform 使用
-    left: 0px;
+    left: 5px;
     top: -10px;
     display: flex;
     flex-wrap: wrap; // 允许换行
     // gap: 20px;
     // row-gap: 10px;
-    width: 100%;
+    width: 96%;
 
     li {
         width: 25%; // 一行4个商品，对应 COLUMN_COUNT = 4
@@ -214,6 +215,7 @@ onUnmounted(() => {
 
         background: #f0f9f4;
         transition: all .5s;
+        padding: 10px;
 
         &:hover {
             transform: translate3d(0, -3px, 0);
