@@ -1,10 +1,7 @@
 <script setup>
 
 import HomePanel from './HomePanel.vue';
-import { ref, computed, onMounted } from 'vue'
-
-import { useDataStore } from '@/stores/json';
-const store = useDataStore()
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 const Maxprice = ref(0)
 const Minprice = ref(0)
@@ -46,16 +43,12 @@ const FilteredList = computed(() => {
 })
 
 import total from '@/assets/new.json'
-import { translate } from 'element-plus';
 
 const NewList = ref(total.result)
-//console.log(NewList.value)
-// console.log(NewList.value.length)
 
 // --- 基础数据 ---
 const displayList = ref([]);
 const loading = ref(false);
-const loadTrigger = ref(null);
 
 // 从 JSON 中生成数据
 const generateFromJSON = (count) => {
@@ -72,6 +65,82 @@ const generateFromJSON = (count) => {
     }
     return result;
 };
+// 暴力增加2000条
+const addMassiveData = () => {
+    const massiveitems = generateFromJSON(20000);
+    displayList.value.push(...massiveitems);
+    console.log('已手动增加20000条数据，当前总数：', displayList.value.length);
+};
+
+// --- 虚拟列表配置 --- 
+const containerRef = ref(null);  // 滚动容器引用
+const itemHeight = 400;          // 固定每行高度
+const viewHeight = ref(window.innerHeight);     // 可视区域高度
+const scrollTop = ref(0);        // 当前滚动距离
+const bufferCount = 3;           // 缓冲数量（防止滑动过快白屏）
+// 控制参数
+const COLUMN_COUNT = 4;
+// 计算总行数
+const totalRow = computed(() => {
+    return Math.ceil(displayList.value.length / COLUMN_COUNT)
+})
+
+
+// 计算总高度（占位高度）= 所有数据加起来的总行数 * 行高
+const totalHeight = computed(() => {
+    return totalRow.value * itemHeight;
+});
+
+// 当前滚动到了第几行
+const currentRow = computed(() => Math.floor(scrollTop.value / itemHeight));
+
+// 计算当前可视范围(考虑缓冲区)
+const startRow = computed(() => {
+    return Math.max(0, currentRow.value - bufferCount);
+})
+
+// 计算当前可视范围的起始索引
+const startIndex = computed(() => {
+    return startRow.value * COLUMN_COUNT;
+})
+
+// 计算当前可视范围的结束索引
+const endIndex = computed(() => {
+    const visibleRow = Math.ceil(viewHeight.value / itemHeight);
+    const endRow = startRow.value + visibleRow + (bufferCount * 2);
+    return Math.min(displayList.value.length, endRow * COLUMN_COUNT);
+})
+
+// 最终渲染的数据切片
+const visibleList = computed(() => {
+    const start = startIndex.value;
+    const end = endIndex.value;
+    return displayList.value.slice(start, end);
+})
+
+// 计算列表相对于顶部的偏移量（必须严格等于 startRow 的高度）
+// 解决空白，必须让列表跟着滚动条走，否则它会滑出视野变成空白
+const offset = computed(() => {
+    return startRow.value * itemHeight;
+});
+
+// 滚动处理，触底加载 
+const handleScroll = () => {
+    if (!containerRef.value) return;
+
+    scrollTop.value = window.scrollY;
+
+    // 触底判断：当 window 滚动到底部附近时
+    const scrollBottom = window.scrollY + window.innerHeight;
+    const containerBottom = document.documentElement.scrollHeight
+
+    // 触底判断
+    if (containerBottom - scrollBottom < 500 && !loading.value) {
+        loadMore();
+        console.log("加载")
+    }
+}
+
 // 无限追加
 const loadMore = () => {
     if (loading.value) return;
@@ -80,98 +149,42 @@ const loadMore = () => {
         const newItems = generateFromJSON(20);
         displayList.value.push(...newItems);
         loading.value = false;
-    }, 500);
+
+        // 调试：打印一下当前总高度，看有没有增加
+        console.log('当前数据总量:', displayList.value.length);
+        console.log('计算出的总高度:', totalHeight.value);
+    }, 50);
 };
-// 暴力增加2000条
-const addMassiveData = () => {
-    const massiveitems = generateFromJSON(20000);
-    displayList.value.push(...massiveitems);
-    console.log('已手动增加20000条数据，当前总数：', displayList.value.length);
-};
+
 onMounted(() => {
     window.addDate = addMassiveData;
     // 初始化数据
     displayList.value.push(...generateFromJSON(20));
-    // 获取容器高度
-    if (containerRef.value) {
-        viewHeight.value = containerRef.value.clientHeight
-    }
-})
-// 触底监听
-// onMounted(() => {
-//     displayList.value.push(...generateFromJSON(20));
-
-//     const observer = new IntersectionObserver((entries) => {
-//         if (entries[0].isIntersecting) {
-//             loadMore();
-//         }
-//     }, { threshold: 0.1 });
-//     if (loadTrigger.value) observer.observe(loadTrigger.value);
-// });
-
-// --- 虚拟列表配置 --- 
-const containerRef = ref(null);  // 滚动容器引用
-const itemHeight = 400;          // 固定每行高度
-const viewHeight = ref(800);     // 可视区域高度
-const scrollTop = ref(0);        // 当前滚动距离
-const bufferCount = 5;           // 缓冲数量（防止滑动过快白屏）
-// 控制参数
-const COLUMN_COUNT = 4;
-
-// 计算总高度（占位高度）= 所有数据加起来的总行数 * 行高
-const totalHeight = computed(() => {
-    const rows = Math.ceil(displayList.value.length / COLUMN_COUNT);
-    return rows * itemHeight;
-});
-
-// 计算当前可视范围的起始索引
-const startIndex = computed(() => {
-    return Math.max(0, Math.floor(scrollTop.value / itemHeight) - bufferCount)
 })
 
-// 计算当前可视范围的结束索引
-const endIndex = computed(() => {
-    return Math.min(
-        displayList.value.length,
-        Math.floor((scrollTop.value + viewHeight.value) / itemHeight) + bufferCount
-    )
+
+onMounted(() => {
+    viewHeight.value = window.innerHeight;
+    loadMore();
+    window.addEventListener('scroll', handleScroll);
+    // 初始执行一次，用于计算初始状态
+    handleScroll();
 })
-
-// 最终渲染的数据切片
-const visibleList = computed(() => {
-    // return displayList.value.slice(startIdedx.value, endIndex.value).map((item, index) => ({
-    //     ...item,
-    //     top: (startIdedx.value + index) * itemHeight
-    // }))
-    const start = startIndex.value * COLUMN_COUNT;
-    const end = start + (Math.ceil(viewHeight.value / itemHeight) + 4) * COLUMN_COUNT;
-    return displayList.value.slice(start, end);
-})
-// 计算列表相对于顶部的偏移量（核心：防止列表随滚动滑出视野）
-const offset = computed(() => startIndex.value * itemHeight);
-
-// 滚动处理  
-const onScroll = computed((e) => {
-    const target = e.target;
-    scrollTop.value = target.scrollTop;
-
-    // 触底判断：滚动到底部剩余 200px 时加载更多
-    if (target.scrollTop + target.clientHeight >= target.scrollHeight - 200) {
-        loadMore();
-    }
+onUnmounted(() => {
+    window.removeEventListener('scroll', handleScroll);
 })
 
 </script>
 <template>
     <HomePanel title="猜你喜欢" sub-title="新鲜出炉 品质靠谱" @grandchildEvent="handleEvent">
-        <div class="virtual-container" ref="containerRef" @scroll="onScroll">
+        <div class="virtual-container" ref="containerRef">
+
             <!-- 撑开高度的占位元素 -->
             <div class="phantom" :style="{ height: totalHeight + 'px' }"></div>
 
             <!-- 实际渲染的内容区域 -->
             <ul class="goods-list" :style="{ transform: `translateY(${offset}px)` }">
-                <li v-for="item in visibleList" :key="item.uniqueId"
-                    :style="{ height: itemHeight + 'px', transform: `translateY(${item.top}px)` }">
+                <li v-for="item in visibleList" :key="item.uniqueId">
                     <RouterLink :to="`/detail/${item.id}`" :commit="FilteredList">
                         <img :src="item.picture" alt="" loading="lazy" />
                         <p class="name">{{ item.name }}</p>
@@ -199,15 +212,17 @@ const onScroll = computed((e) => {
 <style scoped lang='scss'>
 // 视口容器必须固定高度，且 overflow 为 auto
 .virtual-container {
-    height: 800px;
-    overflow-y: auto;
+    // height: 800px;
+    // overflow-y: auto;
+
     position: relative;
     width: 100%;
+    overflow-x: hidden;
 }
 
 // 占位元素：负责撑开滚动条
 .phantom {
-    position: absolute;
+    position: relative;
     left: 0;
     top: 0;
     right: 0;
@@ -219,8 +234,8 @@ const onScroll = computed((e) => {
     display: flex;
     // justify-content: space-between;
     // height: 406px;
-    position: relative; // 配合 transform 使用
-    left: 20px;
+    position: absolute; // 配合 transform 使用
+    left: 0px;
     top: -10px;
     display: flex;
     flex-wrap: wrap; // 允许换行

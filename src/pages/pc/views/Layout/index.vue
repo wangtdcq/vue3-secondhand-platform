@@ -14,5 +14,5 @@ onMounted(() => categoryStore.getCategory())
 
     <LayoutHeader />
     <RouterView />
-    <LayoutFooter />
+    <!-- <LayoutFooter /> -->
 </template>
