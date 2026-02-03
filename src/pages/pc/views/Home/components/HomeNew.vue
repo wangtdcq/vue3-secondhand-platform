@@ -1,56 +1,26 @@
 <script setup>
-
 import HomePanel from './HomePanel.vue';
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
-const Maxprice = ref(0)
-const Minprice = ref(0)
-function handleEvent(data) {
-    //接收参数包含的数据
-    Maxprice.value = data.maxPrice
-    Minprice.value = data.minPrice
-    //console.log('this', Maxprice.value, Minprice.value)
-}
-
-const FilteredList = computed(() => {
-    const sortedList = [...NewList.value]
-    const minPrice = parseFloat(Minprice.value);
-    const maxPrice = parseFloat(Maxprice.value);
-    //二分搜索找到下界
-    let low = 0, high = sortedList.length;
-    while (low < high) {
-        const mid = Math.floor((low + high) / 2);
-        if (parseFloat(sortedList[mid].price) < minPrice) {
-            low = mid + 1;
-        } else {
-            high = mid;
-        }
-    }
-    const lowerBound = low;
-    //二分搜索找到上界
-    low = 0, high = sortedList.length;
-    while (low < high) {
-        const mid = Math.floor((low + high) / 2);
-        if (parseFloat(sortedList[mid].price) <= maxPrice) {
-            low = mid + 1;
-        } else {
-            high = mid;
-        }
-    }
-    const upperBound = low;
-    //通过上下界切割原函数
-    return sortedList.slice(lowerBound, upperBound);
-})
-
-import total from '@/assets/new.json'
-
-const NewList = ref(total.result)
-
 // --- 基础数据 ---
+import total from '@/assets/new.json'
+const NewList = ref(total.result)
 const displayList = ref([]);
 const loading = ref(false);
 
-// 从 JSON 中生成数据
+// --- 核心配置 ---
+const COLUMN_COUNT = 4;
+const itemHeight = 400;
+const bufferCount = 3;
+
+// --- 状态变量 ---
+const containerRef = ref(null);  // 滚动容器引用
+const scrollTop = ref(0);        // 当前滚动距离
+const viewHeight = ref(window.innerHeight); // 可视区
+
+
+// --- 数据生成逻辑 ---
+// // 从 JSON 中生成数据
 const generateFromJSON = (count) => {
     const result = [];
     const sourceLen = NewList.value.length;
@@ -65,28 +35,15 @@ const generateFromJSON = (count) => {
     }
     return result;
 };
-// 暴力增加2000条
-const addMassiveData = () => {
-    const massiveitems = generateFromJSON(20000);
-    displayList.value.push(...massiveitems);
-    console.log('已手动增加20000条数据，当前总数：', displayList.value.length);
-};
 
-// --- 虚拟列表配置 --- 
-const containerRef = ref(null);  // 滚动容器引用
-const itemHeight = 400;          // 固定每行高度
-const viewHeight = ref(window.innerHeight);     // 可视区域高度
-const scrollTop = ref(0);        // 当前滚动距离
-const bufferCount = 3;           // 缓冲数量（防止滑动过快白屏）
-// 控制参数
-const COLUMN_COUNT = 4;
-// 计算总行数
+// --- 虚拟列表核心计算 ---
+// 总行数
 const totalRow = computed(() => {
     return Math.ceil(displayList.value.length / COLUMN_COUNT)
 })
 
 
-// 计算总高度（占位高度）= 所有数据加起来的总行数 * 行高
+// 总高度（用于撑开全局滚动条）= 所有数据加起来的总行数 * 行高
 const totalHeight = computed(() => {
     return totalRow.value * itemHeight;
 });
@@ -96,7 +53,11 @@ const currentRow = computed(() => Math.floor(scrollTop.value / itemHeight));
 
 // 计算当前可视范围(考虑缓冲区)
 const startRow = computed(() => {
-    return Math.max(0, currentRow.value - bufferCount);
+    // 减去容器距离顶部的距离
+    const offsetTop = containerRef.value?.offsetTop || 0;
+    const relativeScrollTop = Math.max(0, scrollTop.value - offsetTop);
+    const row = Math.floor(relativeScrollTop / itemHeight);
+    return Math.max(0, row - bufferCount);
 })
 
 // 计算当前可视范围的起始索引
@@ -118,6 +79,7 @@ const visibleList = computed(() => {
     return displayList.value.slice(start, end);
 })
 
+// 列表区域的位移偏移量
 // 计算列表相对于顶部的偏移量（必须严格等于 startRow 的高度）
 // 解决空白，必须让列表跟着滚动条走，否则它会滑出视野变成空白
 const offset = computed(() => {
@@ -137,7 +99,6 @@ const handleScroll = () => {
     // 触底判断
     if (containerBottom - scrollBottom < 500 && !loading.value) {
         loadMore();
-        console.log("加载")
     }
 }
 
@@ -157,19 +118,23 @@ const loadMore = () => {
 };
 
 onMounted(() => {
-    window.addDate = addMassiveData;
-    // 初始化数据
+    // 初始化首屏数据
     displayList.value.push(...generateFromJSON(20));
-})
-
-
-onMounted(() => {
-    viewHeight.value = window.innerHeight;
-    loadMore();
     window.addEventListener('scroll', handleScroll);
-    // 初始执行一次，用于计算初始状态
-    handleScroll();
+    // 暴露给 window 方便控制台调试，增加10000条数据
+    window.addDate = () => {
+        displayList.value.push(...generateFromJSON(10000));
+        console.log('已手动增加10000条数据，当前总数：', displayList.value.length);
+    }
 })
+
+// onMounted(() => {
+//     viewHeight.value = window.innerHeight;
+//     loadMore();
+
+//     // 初始执行一次，用于计算初始状态
+//     handleScroll();
+// })
 onUnmounted(() => {
     window.removeEventListener('scroll', handleScroll);
 })
@@ -194,7 +159,7 @@ onUnmounted(() => {
             </ul>
 
             <!-- 加载状态 -->
-            <div class="loading-state" :style="{ transform: `translateY(${totalHeight}px)` }">
+            <div class="loading-state">
                 <div v-if="loading" class="loading-content">
                     <div class="spinner"></div>
                     <span class="text">正在努力加载中...</span>
@@ -217,7 +182,7 @@ onUnmounted(() => {
 
     position: relative;
     width: 100%;
-    overflow-x: hidden;
+    overflow: visible;
 }
 
 // 占位元素：负责撑开滚动条
