@@ -29,7 +29,7 @@ function grandfatherEvent(data) {
                 <h3>
                     {{ title }}<small>{{ subTitle }}</small>
                 </h3>
-                <home-filter @grandchildEvent="grandfatherEvent"></home-filter>
+                <!-- <home-filter @grandchildEvent="grandfatherEvent"></home-filter> -->
 
             </div>
             <!-- 主体内容区域 -->
@@ -41,26 +41,32 @@ function grandfatherEvent(data) {
 
 <style scoped lang='scss'>
 .home-panel {
+    // 1. 基础容器设置
     background-color: #fff;
-    position: relative;
-    top: 35px;
-    left: 34px;
     width: 1200px;
+    margin: 35px auto 0; // 顶部 35px 间距，左右自动居中
+    border-radius: 20px;
 
-    border-radius: 20px 20px 20px 20px;
+    // 2. 核心：锁死盒子模型，让 padding 不再撑开宽度
+    box-sizing: border-box;
+    overflow: hidden;
 
     .head {
-        padding: 40px 0;
+        box-sizing: border-box; // 锁死宽度为父级的 100% (1200px)
+        width: 100%; // 确保不超出
+
         display: flex;
         align-items: flex-end;
-        position: relative;
-        left: 30px;
+
+        // 3. 用 padding 实现缩进，不使用 position: relative 和 left
+        // 上 40px, 右 30px, 下 40px, 左 30px
+        padding: 40px 30px;
 
         h3 {
-            flex: 1;
+            // 删掉 flex: 1，宽度随文字走
             font-size: 32px;
             font-weight: normal;
-            margin-left: 6px;
+            margin: 0;
             height: 35px;
             line-height: 35px;
 
@@ -71,11 +77,14 @@ function grandfatherEvent(data) {
             }
         }
 
-        h4 {
-            position: relative;
-            left: -110px;
-            top: -3px;
+        // 4. 右侧筛选组件自动靠右
+        :deep(.home-filter) {
+            // 如果是组件，可能需要穿透
+            margin-left: auto;
         }
+
+        // 或者直接在 head 上加 justify-content
+        // justify-content: space-between; 
     }
 }
 </style>

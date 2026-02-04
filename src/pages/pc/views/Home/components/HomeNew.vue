@@ -42,14 +42,10 @@ const totalRow = computed(() => {
     return Math.ceil(displayList.value.length / COLUMN_COUNT)
 })
 
-
 // 总高度（用于撑开全局滚动条）= 所有数据加起来的总行数 * 行高
 const totalHeight = computed(() => {
     return totalRow.value * itemHeight;
 });
-
-// 当前滚动到了第几行
-const currentRow = computed(() => Math.floor(scrollTop.value / itemHeight));
 
 // 计算当前可视范围(考虑缓冲区)
 const startRow = computed(() => {
@@ -97,7 +93,7 @@ const handleScroll = () => {
     const containerBottom = document.documentElement.scrollHeight
 
     // 触底判断
-    if (containerBottom - scrollBottom < 500 && !loading.value) {
+    if (containerBottom - scrollBottom < 200 && !loading.value) {
         loadMore();
     }
 }
@@ -114,7 +110,7 @@ const loadMore = () => {
         // 调试：打印一下当前总高度，看有没有增加
         console.log('当前数据总量:', displayList.value.length);
         console.log('计算出的总高度:', totalHeight.value);
-    }, 50);
+    }, 500);
 };
 
 onMounted(() => {
@@ -214,7 +210,7 @@ onUnmounted(() => {
         height: 400px; // 必须和 itemHeight 一致
 
         background: #f0f9f4;
-        transition: all .5s;
+        // transition: all .5s;
         padding: 10px;
 
         &:hover {
