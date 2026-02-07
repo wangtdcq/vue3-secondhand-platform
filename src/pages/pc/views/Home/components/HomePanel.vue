@@ -1,7 +1,7 @@
 <script setup>
 defineProps({
     title: {
-        tyep: String
+        type: String
     },
     subTitle: {
         type: String
