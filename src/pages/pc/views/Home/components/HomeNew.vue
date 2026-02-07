@@ -1,295 +1,350 @@
 <script setup>
-import HomePanel from './HomePanel.vue';
-import { ref, computed, onMounted, onUnmounted } from 'vue'
-
-// --- 基础数据 ---
+import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+// 导入本地 JSON 文件
 import total from '@/assets/new.json'
-const NewList = ref(total.result)
-const displayList = ref([]);
-const loading = ref(false);
+import HomePanel from './HomePanel.vue'
 
-// --- 核心配置 ---
-const COLUMN_COUNT = 4;
-const itemHeight = 400;
-const bufferCount = 3;
+// --- 1. 配置参数 ---
+const COLUMN_COUNT = 4
+const UPPER_BUFFER = 5000    // 上滑缓冲区
+const LOWER_BUFFER = 1500    // 下滑缓冲区
+const PAGE_SIZE = 20         // 每次“无限”加载的数量
 
-// --- 状态变量 ---
-const containerRef = ref(null);  // 滚动容器引用
-const scrollTop = ref(0);        // 当前滚动距离
-const viewHeight = ref(window.innerHeight); // 可视区
+// --- 2. 状态存储 ---
+const displayList = ref([])
+const scrollTop = ref(0)
+const viewHeight = ref(window.innerHeight)
+const loading = ref(false)
 
+const heightCache = new Map()
+const imgHeightCache = new Map()
+const decodedImageCache = new Map()
+const positions = ref([])
+const preMeasureList = ref([])
+const offscreenRef = ref(null)
 
-// --- 数据生成逻辑 ---
-// // 从 JSON 中生成数据
-const generateFromJSON = (count) => {
-    const result = [];
-    const sourceLen = NewList.value.length;
+// --- 3. 布局排版算法 ---
+const refreshLayout = (list) => {
+    const count = list.length
+    if (count === 0) return []
+    const newPositions = new Array(count)
+    const columnHeights = new Array(COLUMN_COUNT).fill(0)
+    const colWidth = 100 / COLUMN_COUNT
 
-    const baseIndex = displayList.value.length;
     for (let i = 0; i < count; i++) {
-        const templateItem = NewList.value[i % sourceLen];
-        result.push({
-            ...templateItem,
-            uniqueId: `uid-${baseIndex + i}-${Date.now()}`,
-        });
+        const minH = Math.min(...columnHeights)
+        const colIndex = columnHeights.indexOf(minH)
+
+        // 必须基于 uniqueId 获取，因为无限滚动中原始 id 会重复
+        const h = heightCache.get(list[i].uniqueId) || 200
+        newPositions[i] = {
+            top: minH,
+            left: (colIndex * colWidth) + '%',
+            height: h,
+            bottom: minH + h
+        }
+        columnHeights[colIndex] += h
     }
-    return result;
-};
+    return newPositions
+}
 
-// --- 虚拟列表核心计算 ---
-// 总行数
-const totalRow = computed(() => {
-    return Math.ceil(displayList.value.length / COLUMN_COUNT)
-})
+// --- 4. 离屏预测量（实现真正“无感”加载的核心） ---
+const doPreMeasure = async (newData) => {
+    preMeasureList.value = newData
+    await nextTick()
 
-// 总高度（用于撑开全局滚动条）= 所有数据加起来的总行数 * 行高
-const totalHeight = computed(() => {
-    return totalRow.value * itemHeight;
-});
+    const container = offscreenRef.value
+    const items = container.querySelectorAll('.pre-item')
 
-// 计算当前可视范围(考虑缓冲区)
-const startRow = computed(() => {
-    // 减去容器距离顶部的距离
-    const offsetTop = containerRef.value?.offsetTop || 0;
-    const relativeScrollTop = Math.max(0, scrollTop.value - offsetTop);
-    const row = Math.floor(relativeScrollTop / itemHeight);
-    return Math.max(0, row - bufferCount);
-})
+    const promises = Array.from(items).map((node, i) => {
+        const img = node.querySelector('img')
+        const id = newData[i].uniqueId
 
-// 计算当前可视范围的起始索引
-const startIndex = computed(() => {
-    return startRow.value * COLUMN_COUNT;
-})
+        return new Promise(resolve => {
+            const handleRecord = () => {
+                const rect = node.getBoundingClientRect()
+                const imgRect = img.getBoundingClientRect()
+                heightCache.set(id, rect.height)
+                imgHeightCache.set(id, imgRect.height)
 
-// 计算当前可视范围的结束索引
-const endIndex = computed(() => {
-    const visibleRow = Math.ceil(viewHeight.value / itemHeight);
-    const endRow = startRow.value + visibleRow + (bufferCount * 2);
-    return Math.min(displayList.value.length, endRow * COLUMN_COUNT);
-})
+                // 内存锁定图片位图，防止上滑时内存释放导致的闪烁
+                const memImg = new Image()
+                memImg.src = newData[i].picture
+                decodedImageCache.set(id, memImg)
+                resolve()
+            }
+            if (img.complete) handleRecord()
+            else { img.onload = handleRecord; img.onerror = resolve }
+        })
+    })
 
-// 最终渲染的数据切片
+    await Promise.all(promises)
+    displayList.value.push(...newData)
+    // 更新全量布局
+    positions.value = refreshLayout(displayList.value)
+    preMeasureList.value = []
+}
+
+// --- 5. 无限滚动逻辑：随机抽取商品 ---
+const loadMore = async () => {
+    if (loading.value) return
+    loading.value = true
+
+    // 模拟网络请求时间
+    await new Promise(resolve => setTimeout(resolve, 600))
+
+    const sourceData = total.result
+    // 从本地文件中随机抽取 PAGE_SIZE 个商品
+    const rawData = Array.from({ length: PAGE_SIZE }).map(() => {
+        const randomIndex = Math.floor(Math.random() * sourceData.length)
+        const item = sourceData[randomIndex]
+
+        return {
+            ...item,
+            // 关键：必须生成全新的 uniqueId，否则无限滚动时 Key 会碰撞
+            uniqueId: `${item.id}-${Math.random().toString(36).slice(2, 9)}`
+        }
+    })
+
+    // 进入离屏测量流程
+    await doPreMeasure(rawData)
+
+    loading.value = false
+}
+
+// --- 6. 虚拟列表计算 ---
 const visibleList = computed(() => {
-    const start = startIndex.value;
-    const end = endIndex.value;
-    return displayList.value.slice(start, end);
+    if (positions.value.length === 0) return []
+    const start = scrollTop.value - UPPER_BUFFER
+    const end = scrollTop.value + viewHeight.value + LOWER_BUFFER
+
+    return displayList.value.map((item, index) => ({
+        ...item,
+        _pos: positions.value[index]
+    })).filter(item => {
+        if (!item._pos) return false
+        return item._pos.bottom > start && item._pos.top < end
+    })
 })
 
-// 列表区域的位移偏移量
-// 计算列表相对于顶部的偏移量（必须严格等于 startRow 的高度）
-// 解决空白，必须让列表跟着滚动条走，否则它会滑出视野变成空白
-const offset = computed(() => {
-    return startRow.value * itemHeight;
-});
+const totalHeight = computed(() => {
+    return positions.value.length ? Math.max(...positions.value.map(p => p.bottom)) : 0
+})
 
-// 滚动处理，触底加载 
 const handleScroll = () => {
-    if (!containerRef.value) return;
-
-    scrollTop.value = window.scrollY;
-
-    // 触底判断：当 window 滚动到底部附近时
-    const scrollBottom = window.scrollY + window.innerHeight;
-    const containerBottom = document.documentElement.scrollHeight
-
-    // 触底判断
-    if (containerBottom - scrollBottom < 200 && !loading.value) {
-        loadMore();
+    scrollTop.value = window.scrollY
+    // 距离底部还有 1200px 时自动加载
+    if (document.documentElement.scrollHeight - (window.scrollY + window.innerHeight) < 1200) {
+        loadMore()
     }
 }
 
-// 无限追加
-const loadMore = () => {
-    if (loading.value) return;
-    loading.value = true;
-    setTimeout(() => {
-        const newItems = generateFromJSON(20);
-        displayList.value.push(...newItems);
-        loading.value = false;
-
-        // 调试：打印一下当前总高度，看有没有增加
-        console.log('当前数据总量:', displayList.value.length);
-        console.log('计算出的总高度:', totalHeight.value);
-    }, 500);
-};
-
 onMounted(() => {
-    // 初始化首屏数据
-    displayList.value.push(...generateFromJSON(20));
-    window.addEventListener('scroll', handleScroll);
-    // 暴露给 window 方便控制台调试，增加10000条数据
-    window.addDate = () => {
-        displayList.value.push(...generateFromJSON(10000));
-        console.log('已手动增加10000条数据，当前总数：', displayList.value.length);
-    }
+    loadMore()
+    window.addEventListener('scroll', handleScroll, { passive: true })
 })
 
-// onMounted(() => {
-//     viewHeight.value = window.innerHeight;
-//     loadMore();
-
-//     // 初始执行一次，用于计算初始状态
-//     handleScroll();
-// })
 onUnmounted(() => {
-    window.removeEventListener('scroll', handleScroll);
+    window.removeEventListener('scroll', handleScroll)
+    // 清理内存缓存
+    decodedImageCache.clear()
 })
-
 </script>
+
 <template>
-    <HomePanel title="猜你喜欢" sub-title="新鲜出炉 品质靠谱" @grandchildEvent="handleEvent">
-        <div class="virtual-container" ref="containerRef">
+    <HomePanel title="猜你喜欢" subTitle="肯定是你喜欢的">
+        <div class="waterfall-container">
+            <!-- 1. 离屏测量：用户看不见，用于提前计算高度 -->
+            <div class="offscreen-container" ref="offscreenRef">
+                <div v-for="item in preMeasureList" :key="'pre' + item.uniqueId" class="pre-item"
+                    :style="{ width: (100 / COLUMN_COUNT) + '%' }">
+                    <div class="goods-card">
+                        <div class="img-wrap"><img :src="item.picture" /></div>
+                        <div class="desc-wrap">
+                            <p class="name">{{ item.name }}</p>
+                            <p class="desc-text">{{ item.desc }}</p>
+                            <p class="price">¥{{ item.price }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-            <!-- 撑开高度的占位元素 -->
+            <!-- 2. 正式瀑布流列表 -->
             <div class="phantom" :style="{ height: totalHeight + 'px' }"></div>
+            <ul class="list-wrapper">
+                <li v-for="item in visibleList" :key="item.uniqueId" :style="{
+                    width: (100 / COLUMN_COUNT) + '%',
+                    transform: `translate3d(0, ${item._pos.top}px, 0)`,
+                    left: item._pos.left,
+                    height: item._pos.height + 'px'
+                }">
+                    <div class="goods-card">
+                        <RouterLink :to="`/detail/${item.id}`">
+                            <div class="img-wrap" :style="{ height: imgHeightCache.get(item.uniqueId) + 'px' }">
+                                <img :src="item.picture" decoding="sync" />
+                            </div>
+                            <div class="desc-wrap">
+                                <p class="name">{{ item.name }}</p>
+                                <p class="desc-text">{{ item.desc }}</p>
+                                <p class="price">¥{{ item.price }}</p>
+                            </div>
+                        </RouterLink>
 
-            <!-- 实际渲染的内容区域 -->
-            <ul class="goods-list" :style="{ transform: `translateY(${offset}px)` }">
-                <li v-for="item in visibleList" :key="item.uniqueId">
-                    <RouterLink :to="`/detail/${item.id}`" :commit="FilteredList">
-                        <img :src="item.picture" alt="" loading="lazy" />
-                        <p class="name">{{ item.name }}</p>
-                        <p class="price">&yen;{{ item.price }}</p>
-                    </RouterLink>
+                    </div>
                 </li>
             </ul>
 
-            <!-- 加载状态 -->
-            <div class="loading-state">
-                <div v-if="loading" class="loading-content">
+            <!-- 3. 浅绿色无限加载动画 -->
+            <div class="loading-footer">
+                <div v-if="loading" class="load-status">
                     <div class="spinner"></div>
-                    <span class="text">正在努力加载中...</span>
+                    <span>努力加载中...</span>
                 </div>
-                <div v-else class="text-hint">上拉加载更多</div>
+                <div v-else class="infinite-tip">~ 向上滑动探索更多 ~</div>
             </div>
         </div>
-
     </HomePanel>
-
 
 </template>
 
-
-<style scoped lang='scss'>
-// 视口容器必须固定高度，且 overflow 为 auto
-.virtual-container {
-    // height: 800px;
-    // overflow-y: auto;
-
-    position: relative;
-    width: 100%;
-    overflow: visible;
-
-}
-
-// 占位元素：负责撑开滚动条
-.phantom {
-    position: relative;
+<style scoped>
+/* 离屏容器：确保宽度一致以便准确测量折行 */
+.offscreen-container {
+    position: absolute;
+    top: -20000px;
     left: 0;
-    top: 0;
-    right: 0;
-    z-index: -1;
-}
-
-// 列表样式
-.goods-list {
-    display: flex;
-    // justify-content: space-between;
-    // height: 406px;
-    position: absolute; // 配合 transform 使用
-    left: 5px;
-    top: -10px;
-    display: flex;
-    flex-wrap: wrap; // 允许换行
-    // gap: 20px;
-    // row-gap: 10px;
-    width: 96%;
-
-    li {
-        width: 25%; // 一行4个商品，对应 COLUMN_COUNT = 4
-        height: 400px; // 必须和 itemHeight 一致
-
-        background: #f0f9f4;
-        // transition: all .5s;
-        padding: 10px;
-
-        &:hover {
-            transform: translate3d(0, -3px, 0);
-            box-shadow: 0 3px 8px rgb(0 0 0 / 20%);
-        }
-
-        img {
-            width: 100%;
-            height: 306px;
-        }
-
-        p {
-            font-size: 22px;
-            padding-top: 12px;
-            text-align: center;
-            text-overflow: ellipsis;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-
-        .price {
-            color: $priceColor;
-        }
-    }
-}
-
-.loading-state {
-    /* 关键：让内容水平和垂直居中 */
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    /* 给足够的高度，避免闪烁 */
-    height: 60px;
     width: 100%;
-    padding: 10px 0;
-
-    /* 可选：加个浅背景区分 */
-    // background-color: #f8f9fa;
+    visibility: hidden;
+    pointer-events: none;
 }
 
-.loading-content {
+.pre-item {
+    float: left;
+    padding: 4px;
+    box-sizing: border-box;
+}
+
+.waterfall-container {
+    position: relative;
+    width: 100%;
+    background: #f5f8f6;
+    min-height: 100vh;
+}
+
+.phantom {
+    width: 100%;
+    pointer-events: none;
+}
+
+.list-wrapper {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    position: absolute;
+    top: 0;
+    width: 100%;
+}
+
+.list-wrapper li {
+    position: absolute;
+    padding: 4px;
+    box-sizing: border-box;
+    will-change: transform;
+    transition: none;
+}
+
+.goods-card {
+    background: #fff;
+    border-radius: 8px;
+    overflow: hidden;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.img-wrap {
+    width: 100%;
+    background: #f0f0f0;
+    overflow: hidden;
+}
+
+.img-wrap img {
+    width: 100%;
+    display: block;
+    height: auto;
+}
+
+.desc-wrap {
+    padding: 8px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.name {
+    font-size: 12px;
+    font-weight: bold;
+    color: #333;
+    line-height: 1.4;
+    height: 2.8em;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    margin-bottom: 4px;
+}
+
+.desc-text {
+    font-size: 11px;
+    color: #99a59e;
+    margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.price {
+    color: #42b983;
+    /* 浅绿色 */
+    font-weight: bold;
+    font-size: 14px;
+    margin-top: auto;
+}
+
+/* 浅绿色加载动画样式 */
+.loading-footer {
+    padding: 50px 0;
+    text-align: center;
+    color: #a2b0a9;
+    font-size: 12px;
+}
+
+.load-status {
     display: flex;
     align-items: center;
-    gap: 8px;
-    /* 图标和字的间距 */
+    justify-content: center;
+    gap: 10px;
 }
 
-/* 旋转的圆环 */
 .spinner {
-    width: 18px;
-    height: 18px;
-    border: 2px solid #e1e1e1;
-    /* 浅灰色底环 */
-    border-top: 2px solid #1890ff;
-    /* 蓝色旋转头 */
+    width: 20px;
+    height: 20px;
+    border: 2px solid #e0f2f1;
+    border-top-color: #42b983;
+    /* 浅绿色指示 */
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
-    /* 旋转动画 */
-}
-
-.text {
-    font-size: 13px;
-    color: #666;
-}
-
-.text-hint {
-    font-size: 12px;
-    color: #999;
 }
 
 @keyframes spin {
-    0% {
-        transform: rotate(0deg);
-    }
-
-    100% {
+    to {
         transform: rotate(360deg);
     }
+}
+
+.infinite-tip {
+    opacity: 0.5;
+    letter-spacing: 1px;
 }
 </style>

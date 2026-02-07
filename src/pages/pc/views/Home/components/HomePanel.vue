@@ -1,23 +1,16 @@
 <script setup>
 defineProps({
     title: {
-        tyep: String
+        type: String
     },
     subTitle: {
         type: String
     }
 })
 
-import HomeFilter from './HomeFilter.vue';
-
 import { defineEmits } from 'vue'
 
 const emit = defineEmits(['grandchildEvent'])
-
-function grandfatherEvent(data) {
-    // console.log(data)
-    emit('grandchildEvent', data)
-}
 </script>
 
 
@@ -76,15 +69,6 @@ function grandfatherEvent(data) {
                 margin-left: 20px;
             }
         }
-
-        // 4. 右侧筛选组件自动靠右
-        :deep(.home-filter) {
-            // 如果是组件，可能需要穿透
-            margin-left: auto;
-        }
-
-        // 或者直接在 head 上加 justify-content
-        // justify-content: space-between; 
     }
 }
 </style>
