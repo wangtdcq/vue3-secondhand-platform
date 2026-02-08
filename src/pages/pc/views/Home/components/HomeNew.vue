@@ -1,8 +1,9 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 // 导入本地 JSON 文件
-import total from '@/assets/new.json'
+// import total from '@/assets/new.json'
 import HomePanel from './HomePanel.vue'
+import axios from 'axios'
 
 // --- 1. 配置参数 ---
 const COLUMN_COUNT = 4
@@ -90,26 +91,46 @@ const loadMore = async () => {
     if (loading.value) return
     loading.value = true
 
-    // 模拟网络请求时间
-    await new Promise(resolve => setTimeout(resolve, 600))
+    try {
+        // 1. 发起请求
+        const res = await axios.get('http://localhost:3000/api/goods', {
+            params: { pageSize: PAGE_SIZE }
+        })
 
-    const sourceData = total.result
-    // 从本地文件中随机抽取 PAGE_SIZE 个商品
-    const rawData = Array.from({ length: PAGE_SIZE }).map(() => {
-        const randomIndex = Math.floor(Math.random() * sourceData.length)
-        const item = sourceData[randomIndex]
+        // 2. 检查返回结果
+        if (res.data && res.data.result) {
+            // 直接获取后端随机生成好的 rawData
+            const rawData = res.data.result
 
-        return {
-            ...item,
-            // 关键：必须生成全新的 uniqueId，否则无限滚动时 Key 会碰撞
-            uniqueId: `${item.id}-${Math.random().toString(36).slice(2, 9)}`
+            // 3. 进入你原来的离屏测量流程
+            // 注意：不要再在这里写 Array.from({ length: PAGE_SIZE }).map(...) 了！
+            await doPreMeasure(rawData)
         }
-    })
+    } catch (error) {
+        console.error("数据加载失败", error)
+    } finally {
+        loading.value = false
+    }
+    // 模拟网络请求时间
+    // await new Promise(resolve => setTimeout(resolve, 600))
 
-    // 进入离屏测量流程
-    await doPreMeasure(rawData)
+    // const sourceData = total.result
+    // 从本地文件中随机抽取 PAGE_SIZE 个商品
+    // const rawData = Array.from({ length: PAGE_SIZE }).map(() => {
+    //     const randomIndex = Math.floor(Math.random() * sourceData.length)
+    //     const item = sourceData[randomIndex]
 
-    loading.value = false
+    //     return {
+    //         ...item,
+    //         // 关键：必须生成全新的 uniqueId，否则无限滚动时 Key 会碰撞
+    //         uniqueId: `${item.id}-${Math.random().toString(36).slice(2, 9)}`
+    //     }
+    // })
+
+    // // 进入离屏测量流程
+    // await doPreMeasure(rawData)
+
+    // loading.value = false
 }
 
 // --- 6. 虚拟列表计算 ---
