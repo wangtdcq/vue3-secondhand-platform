@@ -8,12 +8,28 @@ import piniaPluginPersistedstate from 'pinia-plugin-persistedstate'
 
 import '@/styles/common.scss'
 
-const app = createApp(App)
+// const app = createApp(App)
 
 const pinia = createPinia()
 pinia.use(piniaPluginPersistedstate)
 
-app.use(pinia)
-app.use(router)
+// app.use(pinia)
+// app.use(router)
 
-app.mount('#app')
+// app.mount('#app')
+// src/main.js (或 main.jsx)
+async function enableMocking() {
+  const { worker } = await import('@/mocks/brower.js')
+
+  return worker.start({
+    onUnhandledRequest: 'bypass',
+    serviceWorker: {
+      url: '/mockServiceWorker.js',
+    },
+  })
+}
+
+enableMocking().then(() => {
+  // 渲染逻辑
+  createApp(App).use(pinia).use(router).mount('#app')
+})

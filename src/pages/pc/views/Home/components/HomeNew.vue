@@ -4,12 +4,13 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 // import total from '@/assets/new.json'
 import HomePanel from './HomePanel.vue'
 import axios from 'axios'
+import httpInstance from '@/utils/http'
 
 // --- 1. 配置参数 ---
 const COLUMN_COUNT = 4
-const UPPER_BUFFER = 5000    // 上滑缓冲区
-const LOWER_BUFFER = 1500    // 下滑缓冲区
-const PAGE_SIZE = 20         // 每次“无限”加载的数量
+const UPPER_BUFFER = 1500    // 上滑缓冲区
+const LOWER_BUFFER = 1200    // 下滑缓冲区
+const PAGE_SIZE = 10         // 每次“无限”加载的数量
 
 // --- 2. 状态存储 ---
 const displayList = ref([])
@@ -93,14 +94,22 @@ const loadMore = async () => {
 
     try {
         // 1. 发起请求
-        const res = await axios.get('http://localhost:3000/api/goods', {
+        // const res = await axios.get('http://localhost:3000/api/goods', {
+        //     params: { pageSize: PAGE_SIZE }
+        // })
+        const res = await httpInstance('api/goods', {
             params: { pageSize: PAGE_SIZE }
         })
-
+        console.log("Mock:", res);
         // 2. 检查返回结果
-        if (res.data && res.data.result) {
+        if (res && res.result) {
             // 直接获取后端随机生成好的 rawData
-            const rawData = res.data.result
+            // const rawData = res.result
+            const rawData = res.result.map(item => ({
+                ...item,
+                // 给每一项生成唯一的 uniqueId
+                uniqueId: `${item.id}-${Math.random().toString(36).slice(2, 9)}`
+            }))
 
             // 3. 进入你原来的离屏测量流程
             // 注意：不要再在这里写 Array.from({ length: PAGE_SIZE }).map(...) 了！
