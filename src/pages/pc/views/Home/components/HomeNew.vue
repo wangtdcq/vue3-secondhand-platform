@@ -3,7 +3,6 @@ import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
 // 导入本地 JSON 文件
 // import total from '@/assets/new.json'
 import HomePanel from './HomePanel.vue'
-import axios from 'axios'
 import httpInstance from '@/utils/http'
 
 // --- 1. 配置参数 ---
@@ -111,8 +110,6 @@ const loadMore = async () => {
                 uniqueId: `${item.id}-${Math.random().toString(36).slice(2, 9)}`
             }))
 
-            // 3. 进入你原来的离屏测量流程
-            // 注意：不要再在这里写 Array.from({ length: PAGE_SIZE }).map(...) 了！
             await doPreMeasure(rawData)
         }
     } catch (error) {
@@ -120,26 +117,6 @@ const loadMore = async () => {
     } finally {
         loading.value = false
     }
-    // 模拟网络请求时间
-    // await new Promise(resolve => setTimeout(resolve, 600))
-
-    // const sourceData = total.result
-    // 从本地文件中随机抽取 PAGE_SIZE 个商品
-    // const rawData = Array.from({ length: PAGE_SIZE }).map(() => {
-    //     const randomIndex = Math.floor(Math.random() * sourceData.length)
-    //     const item = sourceData[randomIndex]
-
-    //     return {
-    //         ...item,
-    //         // 关键：必须生成全新的 uniqueId，否则无限滚动时 Key 会碰撞
-    //         uniqueId: `${item.id}-${Math.random().toString(36).slice(2, 9)}`
-    //     }
-    // })
-
-    // // 进入离屏测量流程
-    // await doPreMeasure(rawData)
-
-    // loading.value = false
 }
 
 // --- 6. 虚拟列表计算 ---
@@ -211,7 +188,7 @@ onUnmounted(() => {
                     <div class="goods-card">
                         <RouterLink :to="`/detail/${item.id}`">
                             <div class="img-wrap" :style="{ height: imgHeightCache.get(item.uniqueId) + 'px' }">
-                                <img :src="item.picture" decoding="sync" />
+                                <img :src="item.picture" />
                             </div>
                             <div class="desc-wrap">
                                 <p class="name">{{ item.name }}</p>
