@@ -1,18 +1,32 @@
-<script setup>
-defineProps({
-    goods: {
-        type: Object,
-        default: () => { }
-    }
+<script setup lang="ts">
+import type { Goods } from '@/types/goods';
+// defineProps({
+//     goods: {
+//         type: Object,
+//         default: () => { }
+//     }
+// })
+const props = withDefaults(defineProps<{
+    goods?: Goods
+}>(), {
+    goods: () => ({
+        id: '',
+        name: '商品名称',
+        desc: '商品描述',
+        price: '0.00',
+        picture: '',
+        orderNum: 0
+    })
 })
+
 </script>
 
 <template>
     <RouterLink to="/" class="goods-item">
-        <img :src="goods.picture" alt="" />
-        <p class="name ellipsis">{{ goods.name }}</p>
-        <p class="desc ellipsis">{{ goods.desc }}</p>
-        <p class="price">&yen;{{ goods.price }}</p>
+        <img :src="props.goods.picture" alt="" />
+        <p class="name ellipsis">{{ props.goods.name }}</p>
+        <p class="desc ellipsis">{{ props.goods.desc }}</p>
+        <p class="price">&yen;{{ props.goods.price }}</p>
     </RouterLink>
 </template>
 
