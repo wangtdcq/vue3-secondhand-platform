@@ -3,6 +3,7 @@
     "target": "ESNext",
     "useDefineForClassFields": true,
     "module": "ESNext",
+    "types": ["pinia-plugin-persistedstate"],
     "moduleResolution": "Node",
     "strict": true,
     "jsx": "preserve",

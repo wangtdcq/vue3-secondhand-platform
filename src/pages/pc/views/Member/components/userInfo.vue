@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { useUserStore } from '@/stores/user';
 const userStore = useUserStore()
 
@@ -6,12 +6,13 @@ import { getLikeListAPI } from '@/api/user';
 import { onMounted, ref } from 'vue'
 
 import GoodsItem from '@/pages/pc/views/Home/components/GoodsItem.vue'
-const likeList = ref([])
+import type { Goods } from '@/types/goods';
+const likeList = ref<Goods[]>([])
 const getLikeList = async () => {
     const res = await getLikeListAPI({ limit: 4 })
     likeList.value = res.result
 }
-
+console.log("login:", userStore.userInfo)
 onMounted(() => getLikeList())
 </script>
 

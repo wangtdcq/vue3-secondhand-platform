@@ -1,13 +1,15 @@
-<script setup>
+<script setup lang="ts">
+import { BannerItem } from '@/api/home';
 import { getBannerAPI } from '@/api/home';
 import { ref, onMounted } from 'vue'
 
-const bannerList = ref([]);
+const bannerList = ref<BannerItem[]>([]);
 
 const getBanner = async () => {
     const res = await getBannerAPI()
     bannerList.value = res.result
 }
+
 onMounted(() => getBanner())
 </script>
 
